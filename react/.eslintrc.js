@@ -1,33 +1,30 @@
 'use strict';
 
-const {
-  es5Paths,
-  esNextPaths,
-} = require('./scripts/shared/pathsByLanguageVersion');
-
 const restrictedGlobals = require('confusing-browser-globals');
 
 const OFF = 0;
 const ERROR = 2;
 
 module.exports = {
-  extends: ['fbjs', 'prettier'],
+  extends: [
+    'prettier',
+    'eslint:recommended',
+    'plugin:react/recommended',
+    'plugin:@typescript-eslint/recommended',
+  ],
 
   // Stop ESLint from looking for a configuration file in parent folders
   root: true,
 
-  plugins: [
-    'jest',
-    'no-for-of-loops',
-    'no-function-declare-after-return',
-    'react',
-    'react-internal',
-  ],
+  plugins: ['react', '@typescript-eslint'],
 
   parser: 'babel-eslint',
   parserOptions: {
     ecmaVersion: 9,
-    sourceType: 'script',
+    sourceType: 'module',
+    ecmaFeatures: {
+      jsx: true,
+    },
   },
 
   // We're stricter than the default config, mostly. We'll override a few rules
@@ -101,180 +98,9 @@ module.exports = {
 
     // Prevent function declarations after return statements
     'no-function-declare-after-return/no-function-declare-after-return': ERROR,
-
-    // CUSTOM RULES
-    // the second argument of warning/invariant should be a literal string
-    'react-internal/no-primitive-constructors': ERROR,
-    'react-internal/safe-string-coercion': [
-      ERROR,
-      {isProductionUserAppCode: true},
-    ],
-    'react-internal/no-to-warn-dev-within-to-throw': ERROR,
-    'react-internal/warning-args': ERROR,
-    'react-internal/no-production-logging': ERROR,
-    'react-internal/no-cross-fork-imports': ERROR,
-    'react-internal/no-cross-fork-types': [
-      ERROR,
-      {
-        old: [],
-        new: [],
-      },
-    ],
   },
-
-  overrides: [
-    {
-      // By default, anything error message that appears the packages directory
-      // must have a corresponding error code. The exceptions are defined
-      // in the next override entry.
-      files: ['packages/**/*.js'],
-      rules: {
-        'react-internal/prod-error-codes': ERROR,
-      },
-    },
-    {
-      // These are files where it's OK to have unminified error messages. These
-      // are environments where bundle size isn't a concern, like tests
-      // or Node.
-      files: [
-        'packages/react-dom/src/test-utils/**/*.js',
-        'packages/react-devtools-shared/**/*.js',
-        'packages/react-noop-renderer/**/*.js',
-        'packages/react-refresh/**/*.js',
-        'packages/react-server-dom-webpack/**/*.js',
-        'packages/react-test-renderer/**/*.js',
-        'packages/react-debug-tools/**/*.js',
-        'packages/react-devtools-extensions/**/*.js',
-        'packages/react-devtools-timeline/**/*.js',
-        'packages/react-native-renderer/**/*.js',
-        'packages/eslint-plugin-react-hooks/**/*.js',
-        'packages/jest-react/**/*.js',
-        'packages/**/__tests__/*.js',
-        'packages/**/npm/*.js',
-      ],
-      rules: {
-        'react-internal/prod-error-codes': OFF,
-      },
-    },
-    {
-      // We apply these settings to files that we ship through npm.
-      // They must be ES5.
-      files: es5Paths,
-      parser: 'espree',
-      parserOptions: {
-        ecmaVersion: 5,
-        sourceType: 'script',
-      },
-      rules: {
-        'no-var': OFF,
-        strict: ERROR,
-      },
-    },
-    {
-      // We apply these settings to the source files that get compiled.
-      // They can use all features including JSX (but shouldn't use `var`).
-      files: esNextPaths,
-      parser: 'babel-eslint',
-      parserOptions: {
-        ecmaVersion: 8,
-        sourceType: 'module',
-      },
-      rules: {
-        'no-var': ERROR,
-        'prefer-const': ERROR,
-        strict: OFF,
-      },
-    },
-    {
-      files: ['**/__tests__/*.js'],
-      rules: {
-        // https://github.com/jest-community/eslint-plugin-jest
-        'jest/no-focused-tests': ERROR,
-        'jest/valid-expect': ERROR,
-        'jest/valid-expect-in-promise': ERROR,
-      },
-    },
-    {
-      files: [
-        '**/__tests__/**/*.js',
-        'scripts/**/*.js',
-        'packages/*/npm/**/*.js',
-        'packages/dom-event-testing-library/**/*.js',
-        'packages/react-devtools*/**/*.js',
-        'dangerfile.js',
-        'fixtures',
-        'packages/react-dom/src/test-utils/*.js',
-      ],
-      rules: {
-        'react-internal/no-production-logging': OFF,
-        'react-internal/warning-args': OFF,
-        'react-internal/safe-string-coercion': [
-          ERROR,
-          {isProductionUserAppCode: false},
-        ],
-
-        // Disable accessibility checks
-        'jsx-a11y/aria-role': OFF,
-        'jsx-a11y/no-noninteractive-element-interactions': OFF,
-        'jsx-a11y/no-static-element-interactions': OFF,
-        'jsx-a11y/role-has-required-aria-props': OFF,
-        'jsx-a11y/no-noninteractive-tabindex': OFF,
-        'jsx-a11y/tabindex-no-positive': OFF,
-      },
-    },
-    {
-      files: [
-        'scripts/eslint-rules/*.js',
-        'packages/eslint-plugin-react-hooks/src/*.js',
-      ],
-      plugins: ['eslint-plugin'],
-      rules: {
-        'eslint-plugin/prefer-object-rule': ERROR,
-        'eslint-plugin/require-meta-fixable': [
-          ERROR,
-          {catchNoFixerButFixableProperty: true},
-        ],
-        'eslint-plugin/require-meta-has-suggestions': ERROR,
-      },
-    },
-    {
-      files: [
-        'packages/react-native-renderer/**/*.js',
-        'packages/react-server-native-relay/**/*.js',
-      ],
-      globals: {
-        nativeFabricUIManager: 'readonly',
-      },
-    },
-    {
-      files: ['packages/react-server-dom-webpack/**/*.js'],
-      globals: {
-        __webpack_chunk_load__: 'readonly',
-        __webpack_require__: 'readonly',
-      },
-    },
-    {
-      files: ['packages/scheduler/**/*.js'],
-      globals: {
-        TaskController: 'readonly',
-      },
-    },
-  ],
-
-  globals: {
-    spyOnDev: 'readonly',
-    spyOnDevAndProd: 'readonly',
-    spyOnProd: 'readonly',
-    __EXPERIMENTAL__: 'readonly',
-    __EXTENSION__: 'readonly',
-    __PROFILE__: 'readonly',
-    __TEST__: 'readonly',
-    __UMD__: 'readonly',
-    __VARIANT__: 'readonly',
-    gate: 'readonly',
-    trustedTypes: 'readonly',
-    IS_REACT_ACT_ENVIRONMENT: 'readonly',
-    AsyncLocalStorage: 'readonly',
-    globalThis: 'readonly',
+  env: {
+    browser: true,
+    es6: true,
   },
 };
